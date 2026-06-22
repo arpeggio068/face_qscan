@@ -1,0 +1,77 @@
+# Python
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+
+.venv/
+venv/
+env/
+ENV/
+
+# Application Data
+
+data/
+
+# Logs
+
+*.log
+
+# Database
+
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment Variables
+
+.env
+.env.*
+
+# Build
+
+build/
+dist/
+*.egg-info/
+
+# Testing
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+
+.vscode/
+.idea/
+
+# Jupyter
+
+.ipynb_checkpoints/
+
+# Cache
+
+.cache/
+
+# OS Files
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Runtime
+
+*.pid
+*.pid.lock
+
+# Python temporary files
+
+*.tmp
+*.temp
+
+# Bytecode
+
+*.pyo
+*.pyd
