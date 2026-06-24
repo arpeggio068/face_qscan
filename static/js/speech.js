@@ -50,3 +50,12 @@ async function speakQueue(queueNo) {
 
     await playAudioPromise("/static/mp3/outro.mp3");
 }
+
+async function speakFull() {
+    if (!isVoiceEnabled()) {
+        console.log("ยังไม่ได้เปิดระบบเสียง");
+        return;
+    }
+
+    await playAudioPromise("/static/mp3/full.mp3");
+}

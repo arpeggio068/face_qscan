@@ -41,6 +41,16 @@ function updateUI(res) {
 
 function checkAndSpeakQueue(res) {
     if (
+        res.state === "QUEUE_FULL" &&
+        res.last_event_id &&
+        res.last_event_id !== lastEventId
+    ) {
+        lastEventId = res.last_event_id;
+        speakFull();
+        return;
+    }
+
+    if (
         res.state === "CAPTURED" &&
         res.queue_no &&
         res.last_event_id &&
@@ -101,6 +111,9 @@ function getStateText(state) {
 
         case "ERROR":
             return "ระบบผิดพลาด";
+
+        case "QUEUE_FULL":
+            return "คิวเต็ม";
 
         default:
             return "ระบบพร้อมทำงาน";

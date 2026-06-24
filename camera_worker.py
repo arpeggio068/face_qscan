@@ -1,3 +1,5 @@
+# camera_worker.py
+
 import time
 from datetime import datetime
 
@@ -164,23 +166,38 @@ def camera_loop():
 
                     event_id = int(time.time() * 1000)
 
-                    update_state(
-                        state="CAPTURED",
-                        message=result.get("message", "สแกนสำเร็จ"),
-                        queue_no=result.get("queue_no", ""),
-                        similarity=result.get("similarity"),
-                        can_print=result.get("can_print", False),
-                        last_event_id=event_id,
-                        wait_remaining=0,
-                        video_enabled=True
-                    )
+                    if result.get("status") == "queue_full":
+                        update_state(
+                            state="QUEUE_FULL",
+                            message=result.get(
+                                "message",
+                                "คิวเต็มแล้ว กรุณาติดต่อเจ้าหน้าที่"
+                            ),
+                            queue_no="",
+                            det_score=det_score,
+                            similarity=None,
+                            can_print=False,
+                            last_event_id=event_id,
+                            wait_remaining=0,
+                            video_enabled=True
+                        )
+                    else:
+                        update_state(
+                            state="CAPTURED",
+                            message=result.get("message", "สแกนสำเร็จ"),
+                            queue_no=result.get("queue_no", ""),
+                            det_score=det_score,
+                            similarity=result.get("similarity"),
+                            can_print=result.get("can_print", False),
+                            last_event_id=event_id,
+                            wait_remaining=0,
+                            video_enabled=True
+                        )
 
                     face_ready_since = None
 
-                    # ค้างหน้าผลลัพธ์ 3 วินาที เช่น ออกคิวใหม่ / พบใบหน้าเดิม
                     time.sleep(RESULT_DISPLAY_SECONDS)
 
-                    # หลังแสดงผลลัพธ์แล้ว ค่อยปิด video feed เพื่อประหยัด CPU
                     clear_latest_frame()
 
                     next_scan_time = time.time() + CAPTURE_COOLDOWN_SECONDS
@@ -207,6 +224,7 @@ def camera_loop():
                 queue_no="",
                 det_score=0.0,
                 similarity=None,
+                can_print=False,
                 wait_remaining=0,
                 video_enabled=True
             )
@@ -221,8 +239,11 @@ def camera_loop():
                 queue_no="",
                 det_score=0.0,
                 similarity=None,
+                can_print=False,
                 wait_remaining=0,
                 video_enabled=True
             )
 
         time.sleep(SCAN_SLEEP_SECONDS)
+
+

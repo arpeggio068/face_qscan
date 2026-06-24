@@ -8,7 +8,7 @@ from face_engine import cosine_similarity
 from config import (
     MAX_QUEUE,
     MAX_PRINT_PER_FACE,
-    SIMILARITY_THRESHOLD
+    SIMILARITY_THRESHOLD,   
 )
 
 
@@ -104,6 +104,25 @@ def insert_log(cur, queue_id, action, similarity=None):
         action,
         similarity,
         now_th()
+    ))
+
+
+def insert_queue_history(cur, queue_date, queue_no, qr_token, det_score, created_at):
+    cur.execute("""
+        INSERT OR IGNORE INTO queue_history(
+            queue_date,
+            queue_no,
+            qr_token,
+            det_score,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        queue_date,
+        queue_no,
+        qr_token,
+        float(det_score),
+        created_at
     ))
 
 
@@ -206,6 +225,15 @@ def save_or_update_queue(embedding, det_score):
 
     queue_id = cur.lastrowid
 
+    insert_queue_history(
+        cur=cur,
+        queue_date=queue_date,
+        queue_no=queue_no,
+        qr_token=qr_token,
+        det_score=det_score,
+        created_at=current_time
+    )
+
     insert_log(
         cur=cur,
         queue_id=queue_id,
@@ -224,3 +252,19 @@ def save_or_update_queue(embedding, det_score):
         "can_print": True,
         "message": "ออกคิวใหม่"
     }
+
+
+
+def reset_live_queues():
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM queues")
+
+    cur.execute("""
+        DELETE FROM sqlite_sequence
+        WHERE name = 'queues'
+    """)
+
+    conn.commit()
+    conn.close()

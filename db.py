@@ -22,7 +22,19 @@ def init_db():
             scan_count INTEGER DEFAULT 1,
             print_count INTEGER DEFAULT 1,
             created_at TEXT NOT NULL,
-            last_scan_at TEXT NOT NULL,
+            last_scan_at TEXT NOT NULL,           
+            UNIQUE(queue_date, queue_no)
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS queue_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            queue_date TEXT NOT NULL,
+            queue_no TEXT NOT NULL,
+            qr_token TEXT NOT NULL,
+            det_score REAL,
+            created_at TEXT NOT NULL,
             UNIQUE(queue_date, queue_no)
         )
     """)
