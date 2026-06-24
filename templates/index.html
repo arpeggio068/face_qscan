@@ -5,7 +5,7 @@
     <title>Face Queue Scanner</title>
 
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=3">
 </head>
 
 <body>
@@ -21,6 +21,18 @@
                 <button id="enableVoiceBtn" class="btn btn-primary voice-btn">
                     เปิดเสียงพูด
                 </button>
+
+                <div class="queue-summary">
+                    วันนี้รับ
+                    <span id="maxQueueText" class="queue-max">-</span>
+                    คิว
+
+                    <span class="queue-used-text">
+                        ใช้ไปแล้ว
+                        <span id="usedQueueText" class="queue-used">-</span>
+                        คิว
+                    </span>
+                </div>
 
                 <div id="stateText" class="state-text">กำลังเริ่มระบบ</div>
 

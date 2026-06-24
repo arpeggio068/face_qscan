@@ -6,7 +6,7 @@ from datetime import datetime
 import cv2
 
 from face_engine import load_face_app, draw_face
-from queue_service import save_or_update_queue
+from queue_service import save_or_update_queue, get_queue_count
 from config import (
     DET_SCORE_THRESHOLD,
     STARTUP_COOLDOWN_SECONDS,
@@ -18,6 +18,7 @@ from config import (
     WAIT_SLEEP_SECONDS,
     AUTO_CAPTURE_STABLE_SECONDS,
     RESULT_DISPLAY_SECONDS,
+    MAX_QUEUE,
 )
 import shared_state
 
@@ -32,6 +33,18 @@ def update_state(**kwargs):
         shared_state.current_state["last_update"] = now_text()
 
 
+def get_current_used_queue():
+    with shared_state.state_lock:
+        return shared_state.current_state.get("used_queue", 0)
+
+
+def queue_no_to_int(queue_no):
+    try:
+        return int(str(queue_no))
+    except Exception:
+        return 0
+
+
 def set_latest_frame(frame):
     with shared_state.state_lock:
         shared_state.latest_frame = frame.copy()
@@ -43,6 +56,7 @@ def clear_latest_frame():
 
 
 def camera_loop():
+    initial_used_queue = get_queue_count()
     update_state(
         state="STARTUP",
         message="กำลังเริ่มระบบ กรุณาออกห่างจากกล้อง",
@@ -52,7 +66,9 @@ def camera_loop():
         can_print=False,
         last_event_id=0,
         wait_remaining=STARTUP_COOLDOWN_SECONDS,
-        video_enabled=False
+        video_enabled=False,
+        max_queue=MAX_QUEUE,
+        used_queue=initial_used_queue,
     )
 
     face_app = load_face_app()
@@ -79,7 +95,9 @@ def camera_loop():
             state="STARTUP",
             message=f"กำลังเริ่มระบบ กรุณารอ {remaining} วินาที",
             wait_remaining=remaining,
-            video_enabled=False
+            video_enabled=False,
+            max_queue=MAX_QUEUE,
+            used_queue=get_current_used_queue(),
         )
 
         clear_latest_frame()
@@ -94,7 +112,9 @@ def camera_loop():
         can_print=False,
         last_event_id=0,
         wait_remaining=0,
-        video_enabled=True
+        video_enabled=True,
+        max_queue=MAX_QUEUE,
+        used_queue=get_current_used_queue(),
     )
 
     next_scan_time = 0
@@ -111,7 +131,9 @@ def camera_loop():
                 message=f"กรุณารอ {remaining} วินาที ก่อนสแกนคนถัดไป",
                 det_score=0.0,
                 wait_remaining=remaining,
-                video_enabled=False
+                video_enabled=False,
+                max_queue=MAX_QUEUE,
+                used_queue=get_current_used_queue(),
             )
 
             face_ready_since = None
@@ -125,7 +147,9 @@ def camera_loop():
             update_state(
                 state="ERROR",
                 message="อ่านภาพจากกล้องไม่ได้",
-                video_enabled=False
+                video_enabled=False,
+                max_queue=MAX_QUEUE,
+                used_queue=get_current_used_queue(),
             )
             clear_latest_frame()
             time.sleep(1)
@@ -155,7 +179,9 @@ def camera_loop():
                     message=f"พบใบหน้า กรุณานิ่งไว้ {remaining_stable:.1f} วินาที",
                     det_score=det_score,
                     wait_remaining=0,
-                    video_enabled=True
+                    video_enabled=True,
+                    max_queue=MAX_QUEUE,
+                    used_queue=get_current_used_queue(),
                 )
 
                 if stable_time >= AUTO_CAPTURE_STABLE_SECONDS:
@@ -165,6 +191,11 @@ def camera_loop():
                     )
 
                     event_id = int(time.time() * 1000)
+
+                    if result.get("status") == "new_face":
+                        used_queue = queue_no_to_int(result.get("queue_no"))
+                    else:
+                        used_queue = get_current_used_queue()
 
                     if result.get("status") == "queue_full":
                         update_state(
@@ -179,7 +210,9 @@ def camera_loop():
                             can_print=False,
                             last_event_id=event_id,
                             wait_remaining=0,
-                            video_enabled=True
+                            video_enabled=True,
+                            max_queue=MAX_QUEUE,
+                            used_queue=used_queue,
                         )
                     else:
                         update_state(
@@ -191,7 +224,9 @@ def camera_loop():
                             can_print=result.get("can_print", False),
                             last_event_id=event_id,
                             wait_remaining=0,
-                            video_enabled=True
+                            video_enabled=True,
+                            max_queue=MAX_QUEUE,
+                            used_queue=used_queue,
                         )
 
                     face_ready_since = None
@@ -211,7 +246,9 @@ def camera_loop():
                     message="พบใบหน้า แต่ภาพยังไม่ชัด กรุณาขยับเข้าใกล้กล้อง",
                     det_score=det_score,
                     wait_remaining=0,
-                    video_enabled=True
+                    video_enabled=True,
+                    max_queue=MAX_QUEUE,
+                    used_queue=get_current_used_queue(),
                 )
 
         elif len(faces) > 1:
@@ -226,7 +263,9 @@ def camera_loop():
                 similarity=None,
                 can_print=False,
                 wait_remaining=0,
-                video_enabled=True
+                video_enabled=True,
+                max_queue=MAX_QUEUE,
+                used_queue=get_current_used_queue(),
             )
 
         else:
@@ -241,9 +280,9 @@ def camera_loop():
                 similarity=None,
                 can_print=False,
                 wait_remaining=0,
-                video_enabled=True
+                video_enabled=True,
+                max_queue=MAX_QUEUE,
+                used_queue=get_current_used_queue(),
             )
 
         time.sleep(SCAN_SLEEP_SECONDS)
-
-

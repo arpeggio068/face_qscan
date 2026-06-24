@@ -254,6 +254,25 @@ def save_or_update_queue(embedding, det_score):
     }
 
 
+def get_queue_count():
+    queue_date = get_today()
+
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM queues
+        WHERE queue_date = ?
+    """, (queue_date,))
+
+    count = cur.fetchone()[0]
+
+    conn.close()
+
+    return count
+
+
 
 def reset_live_queues():
     conn = get_conn()

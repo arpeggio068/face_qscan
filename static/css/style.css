@@ -86,9 +86,30 @@ body {
 .voice-btn {
     position: absolute;
     top: 24px;
-    right: 32px;
-    font-size: 22px;
-    padding: 10px 24px;
-    border-radius: 12px;
-    z-index: 10;
+    right: 24px;
+}
+
+.queue-summary {
+    margin-top: 40px;
+    margin-bottom: 22px;
+
+    font-size: 26px;
+    font-weight: 600;
+    color: #ffffff;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.queue-used-text {
+    margin-left: 26px;
+}
+
+.queue-max {
+    color: #ffd166;
+    font-weight: 800;
+}
+
+.queue-used {
+    color: #06d6a0;
+    font-weight: 800;
 }
