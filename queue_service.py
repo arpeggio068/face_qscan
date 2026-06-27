@@ -1,3 +1,5 @@
+# queue_service.py
+
 import uuid
 import numpy as np
 from datetime import date, datetime
@@ -5,8 +7,8 @@ from datetime import date, datetime
 from db import get_conn
 from crypto_service import encrypt_bytes, decrypt_bytes
 from face_engine import cosine_similarity
+import shared_state
 from config import (
-    MAX_QUEUE,
     MAX_PRINT_PER_FACE,
     SIMILARITY_THRESHOLD,   
 )
@@ -48,7 +50,9 @@ def get_next_queue_no(conn, queue_date):
     else:
         next_no = int(row[0]) + 1
 
-    if next_no > MAX_QUEUE:
+    max_queue = shared_state.max_queue
+
+    if next_no > max_queue:
         return None
 
     return f"{next_no:03d}"
@@ -79,6 +83,12 @@ def find_similar_face(conn, embedding):
             continue
 
         sim = cosine_similarity(old_embedding, embedding)
+
+        print(
+            f"[FACE CHECK] queue_no={queue_no}, "
+            f"similarity={sim:.4f}, "
+            f"threshold={SIMILARITY_THRESHOLD}"
+        )
 
         if sim > best_similarity:
             best_similarity = sim

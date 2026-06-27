@@ -29,6 +29,8 @@ data/
 
 .env
 .env.*
+.ENV
+.ENV.*
 
 # Build
 

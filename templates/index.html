@@ -5,7 +5,7 @@
     <title>Face Queue Scanner</title>
 
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/css/style.css?v=3">
+    <link rel="stylesheet" href="/static/css/style.css?v=4">
 </head>
 
 <body>
@@ -17,6 +17,10 @@
             </div>
 
             <div class="col-md-7 status-box">
+                <div class="queue-date">
+                    <span id="apiStateIcon">🔴</span>
+                    <span id="queueDateText">-</span>
+                </div>
 
                 <button id="enableVoiceBtn" class="btn btn-primary voice-btn">
                     เปิดเสียงพูด
@@ -54,6 +58,6 @@
     <script src="/static/js/jquery-3.6.0.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/speech.js"></script>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=2"></script>
 </body>
 </html>

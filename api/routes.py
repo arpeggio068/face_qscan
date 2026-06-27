@@ -17,7 +17,15 @@ router = APIRouter()
 @router.get("/api/status")
 def get_status():
     with shared_state.state_lock:
-        return dict(shared_state.current_state)
+        data = dict(shared_state.current_state)
+
+        data["max_queue"] = shared_state.max_queue
+        data["queue_date"] = shared_state.queue_date
+        data["queue_date_display"] = shared_state.queue_date_display
+        data["checked_at"] = shared_state.checked_at
+        data["api_state"] = shared_state.api_state
+
+        return data
 
 
 def mjpeg_generator():

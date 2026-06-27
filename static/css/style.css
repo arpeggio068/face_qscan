@@ -113,3 +113,18 @@ body {
     color: #06d6a0;
     font-weight: 800;
 }
+
+.queue-date {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-top: 8px;
+    margin-bottom: 22px;
+    letter-spacing: 0.5px;
+}
+
+#queueDateText {
+    color: #ffd166;
+    font-weight: 800;
+}

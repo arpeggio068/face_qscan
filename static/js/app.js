@@ -2,6 +2,51 @@
 
 let lastEventId = 0;
 
+function formatThaiDateWithWeekday(thDate) {
+
+    if (!thDate) return "-";
+
+    const parts = thDate.split("/");
+
+    if (parts.length !== 3) return thDate;
+
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const thaiYear = parseInt(parts[2], 10);
+
+    const christianYear = thaiYear - 543;
+
+    const date = new Date(christianYear, month - 1, day);
+
+    let weekday = "";
+
+    switch (date.getDay()) {
+        case 0:
+            weekday = "วันอาทิตย์";
+            break;
+        case 1:
+            weekday = "วันจันทร์";
+            break;
+        case 2:
+            weekday = "วันอังคาร";
+            break;
+        case 3:
+            weekday = "วันพุธ";
+            break;
+        case 4:
+            weekday = "วันพฤหัสบดี";
+            break;
+        case 5:
+            weekday = "วันศุกร์";
+            break;
+        case 6:
+            weekday = "วันเสาร์";
+            break;
+    }
+
+    return `${weekday} ที่ ${thDate}`;
+}
+
 function loadStatus() {
     $.ajax({
         url: "/api/status",
@@ -9,19 +54,58 @@ function loadStatus() {
         dataType: "json",
         cache: false,
         success: function (res) {
+
+            console.log("========== /api/status ==========");
+            console.log(res);
+            console.log("checked_at =", res.checked_at);
+            console.log("api_state =", res.api_state);
+
             updateUI(res);
         },
-        error: function () {
+        error: function (xhr, status, error) {
+
+            console.log("AJAX ERROR");
+            console.log(status);
+            console.log(error);
+
             $("#stateText").text("เชื่อมต่อระบบไม่ได้");
             $("#messageText").text("กรุณาตรวจสอบ server");
         }
     });
 }
 
+
+
 function updateUI(res) {
+
+    console.log("queue_date_display =", res.queue_date_display);
+    console.log("max_queue =", res.max_queue);
+    
 
     $("#stateText").text(getStateText(res.state));
     $("#messageText").text(res.message || "");
+
+    // =========================
+    // แสดงสถานะ API
+    // =========================
+
+    if (res.api_state === "online") {
+        $("#apiStateIcon").text("🟢");
+    } else {
+        $("#apiStateIcon").text("🔴");
+    }
+
+    // =========================
+    // แสดงวันที่คิว
+    // =========================
+    
+    if (res.queue_date_display) {
+        $("#queueDateText").text(
+            formatThaiDateWithWeekday(res.queue_date_display)
+        );
+    } else {
+        $("#queueDateText").text("-");
+    }
 
     // =========================
     // แสดงจำนวนคิว
@@ -177,5 +261,5 @@ $(document).ready(function () {
 
     loadStatus();
 
-    setInterval(loadStatus, 1000);
+    setInterval(loadStatus, 2000);
 });

@@ -17,12 +17,19 @@ from config import (
     SCAN_SLEEP_SECONDS,
     WAIT_SLEEP_SECONDS,
     AUTO_CAPTURE_STABLE_SECONDS,
-    RESULT_DISPLAY_SECONDS,
-    MAX_QUEUE,
+    RESULT_DISPLAY_SECONDS,   
+    INFER_INTERVAL_SECONDS, 
 )
 import shared_state
 
+def get_current_queue_date_display():
+    with shared_state.state_lock:
+        return shared_state.queue_date_display
 
+def get_current_max_queue():
+    with shared_state.state_lock:
+        return shared_state.max_queue
+    
 def now_text():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -67,8 +74,9 @@ def camera_loop():
         last_event_id=0,
         wait_remaining=STARTUP_COOLDOWN_SECONDS,
         video_enabled=False,
-        max_queue=MAX_QUEUE,
+        max_queue=get_current_max_queue(),
         used_queue=initial_used_queue,
+        queue_date_display=get_current_queue_date_display(),
     )
 
     face_app = load_face_app()
@@ -96,8 +104,9 @@ def camera_loop():
             message=f"กำลังเริ่มระบบ กรุณารอ {remaining} วินาที",
             wait_remaining=remaining,
             video_enabled=False,
-            max_queue=MAX_QUEUE,
+            max_queue=get_current_max_queue(),
             used_queue=get_current_used_queue(),
+            queue_date_display=get_current_queue_date_display(),
         )
 
         clear_latest_frame()
@@ -113,12 +122,15 @@ def camera_loop():
         last_event_id=0,
         wait_remaining=0,
         video_enabled=True,
-        max_queue=MAX_QUEUE,
+        max_queue=get_current_max_queue(),
         used_queue=get_current_used_queue(),
+        queue_date_display=get_current_queue_date_display(),
     )
 
     next_scan_time = 0
     face_ready_since = None
+    last_infer_time = 0
+    last_faces = []
 
     while True:
         now = time.time()
@@ -132,8 +144,9 @@ def camera_loop():
                 det_score=0.0,
                 wait_remaining=remaining,
                 video_enabled=False,
-                max_queue=MAX_QUEUE,
+                max_queue=get_current_max_queue(),
                 used_queue=get_current_used_queue(),
+                queue_date_display=get_current_queue_date_display(),
             )
 
             face_ready_since = None
@@ -148,14 +161,22 @@ def camera_loop():
                 state="ERROR",
                 message="อ่านภาพจากกล้องไม่ได้",
                 video_enabled=False,
-                max_queue=MAX_QUEUE,
+                max_queue=get_current_max_queue(),
                 used_queue=get_current_used_queue(),
+                queue_date_display=get_current_queue_date_display(),
             )
             clear_latest_frame()
             time.sleep(1)
-            continue
-
-        faces = face_app.get(frame)
+            continue       
+        
+        
+        if now - last_infer_time >= INFER_INTERVAL_SECONDS:
+            faces = face_app.get(frame)
+            last_faces = faces
+            last_infer_time = now
+        else:
+            faces = last_faces
+            
 
         if len(faces) == 1:
             face = faces[0]
@@ -180,8 +201,9 @@ def camera_loop():
                     det_score=det_score,
                     wait_remaining=0,
                     video_enabled=True,
-                    max_queue=MAX_QUEUE,
+                    max_queue=get_current_max_queue(),
                     used_queue=get_current_used_queue(),
+                    queue_date_display=get_current_queue_date_display(),
                 )
 
                 if stable_time >= AUTO_CAPTURE_STABLE_SECONDS:
@@ -211,8 +233,9 @@ def camera_loop():
                             last_event_id=event_id,
                             wait_remaining=0,
                             video_enabled=True,
-                            max_queue=MAX_QUEUE,
+                            max_queue=get_current_max_queue(),
                             used_queue=used_queue,
+                            queue_date_display=get_current_queue_date_display(),
                         )
                     else:
                         update_state(
@@ -225,8 +248,9 @@ def camera_loop():
                             last_event_id=event_id,
                             wait_remaining=0,
                             video_enabled=True,
-                            max_queue=MAX_QUEUE,
+                            max_queue=get_current_max_queue(),
                             used_queue=used_queue,
+                            queue_date_display=get_current_queue_date_display(),
                         )
 
                     face_ready_since = None
@@ -247,8 +271,9 @@ def camera_loop():
                     det_score=det_score,
                     wait_remaining=0,
                     video_enabled=True,
-                    max_queue=MAX_QUEUE,
+                    max_queue=get_current_max_queue(),
                     used_queue=get_current_used_queue(),
+                    queue_date_display=get_current_queue_date_display(),
                 )
 
         elif len(faces) > 1:
@@ -264,8 +289,9 @@ def camera_loop():
                 can_print=False,
                 wait_remaining=0,
                 video_enabled=True,
-                max_queue=MAX_QUEUE,
+                max_queue=get_current_max_queue(),
                 used_queue=get_current_used_queue(),
+                queue_date_display=get_current_queue_date_display(),
             )
 
         else:
@@ -281,8 +307,9 @@ def camera_loop():
                 can_print=False,
                 wait_remaining=0,
                 video_enabled=True,
-                max_queue=MAX_QUEUE,
+                max_queue=get_current_max_queue(),
                 used_queue=get_current_used_queue(),
+                queue_date_display=get_current_queue_date_display(),
             )
 
         time.sleep(SCAN_SLEEP_SECONDS)
