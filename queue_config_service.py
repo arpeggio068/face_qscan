@@ -1,3 +1,5 @@
+# queue_config_service.py
+
 import requests
 from datetime import datetime
 
@@ -34,6 +36,7 @@ def get_queue_config():
         "checked_at": now_text(),
         "api_state": "offline",
         "source": "default",
+        "disabled_today": False,
     }
 
     print("========== Queue API ==========")
@@ -58,6 +61,28 @@ def get_queue_config():
 
         obj = r.json()
 
+        checked_at = obj.get("checked_at", now_text())
+        disabled_today = bool(obj.get("disabled_today", False))
+
+        # ถ้าวันนี้ปิดบริการ ไม่สนใจ queue_date / max_queue
+        if disabled_today:
+            result = {
+                "max_queue": 0,
+                "queue_date": default_date,
+                "queue_date_display": format_thai_date(default_date),
+                "checked_at": checked_at,
+                "api_state": "online",
+                "source": "api",
+                "disabled_today": True,
+            }
+
+            print("[Queue API] disabled_today = True")
+            print("[Queue API] วันนี้งดบริการแจกคิว")
+            print(f"[Queue API] checked_at = {checked_at}")
+            print("[Queue API] api_state = online")
+
+            return result
+
         if obj.get("status"):
             data = obj.get("data", [])
 
@@ -65,26 +90,23 @@ def get_queue_config():
                 rec = data[0]
 
                 queue_date = rec.get("queue_date", default_date)
-
-                value = rec.get("max_queue")
-                if value is None:
-                    value = rec.get("limit")
-
-                max_queue = int(value)
+                max_queue = int(rec.get("max_queue"))
 
                 result = {
                     "max_queue": max_queue,
                     "queue_date": queue_date,
                     "queue_date_display": format_thai_date(queue_date),
-                    "checked_at": obj.get("checked_at", now_text()),
+                    "checked_at": checked_at,
                     "api_state": "online",
                     "source": "api",
+                    "disabled_today": False,
                 }
 
                 print(f"[Queue API] MAX_QUEUE = {max_queue}")
                 print(f"[Queue API] queue_date = {queue_date}")
                 print(f"[Queue API] checked_at = {result['checked_at']}")
-                print(f"[Queue API] api_state = online")
+                print("[Queue API] api_state = online")
+                print("[Queue API] disabled_today = False")
 
                 return result
 
@@ -95,5 +117,6 @@ def get_queue_config():
 
     print(f"[Queue API] use default MAX_QUEUE = {MAX_QUEUE}")
     print("[Queue API] api_state = offline")
+    print("[Queue API] disabled_today = False")
 
     return result

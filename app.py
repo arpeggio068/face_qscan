@@ -1,6 +1,7 @@
 # app.py
 
 import threading
+import time
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -14,22 +15,25 @@ from config import BASE_DIR
 
 import shared_state
 from queue_config_service import get_queue_config
-import time
 
 
 def apply_queue_config(queue_config):
+    disabled_today = queue_config.get("disabled_today", False)
+
     with shared_state.state_lock:
         shared_state.max_queue = queue_config["max_queue"]
         shared_state.queue_date = queue_config["queue_date"]
         shared_state.queue_date_display = queue_config["queue_date_display"]
         shared_state.checked_at = queue_config["checked_at"]
         shared_state.api_state = queue_config["api_state"]
+        shared_state.disabled_today = disabled_today
 
         shared_state.current_state["max_queue"] = queue_config["max_queue"]
         shared_state.current_state["queue_date"] = queue_config["queue_date"]
         shared_state.current_state["queue_date_display"] = queue_config["queue_date_display"]
         shared_state.current_state["checked_at"] = queue_config["checked_at"]
         shared_state.current_state["api_state"] = queue_config["api_state"]
+        shared_state.current_state["disabled_today"] = disabled_today
 
 
 def queue_config_loop():
@@ -42,6 +46,7 @@ def queue_config_loop():
         print(f"[Queue API Update] max_queue = {shared_state.max_queue}")
         print(f"[Queue API Update] checked_at = {shared_state.checked_at}")
         print(f"[Queue API Update] api_state = {shared_state.api_state}")
+        print(f"[Queue API Update] disabled_today = {shared_state.disabled_today}")
 
 
 app = FastAPI()
@@ -68,6 +73,7 @@ def startup_event():
     print(f"[STARTUP] queue_date_display = {shared_state.queue_date_display}")
     print(f"[STARTUP] checked_at = {shared_state.checked_at}")
     print(f"[STARTUP] api_state = {shared_state.api_state}")
+    print(f"[STARTUP] disabled_today = {shared_state.disabled_today}")
 
     t_api = threading.Thread(
         target=queue_config_loop,

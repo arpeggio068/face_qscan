@@ -80,14 +80,10 @@ function updateUI(res) {
 
     console.log("queue_date_display =", res.queue_date_display);
     console.log("max_queue =", res.max_queue);
-    
+    console.log("disabled_today =", res.disabled_today);
 
     $("#stateText").text(getStateText(res.state));
     $("#messageText").text(res.message || "");
-
-    // =========================
-    // แสดงสถานะ API
-    // =========================
 
     if (res.api_state === "online") {
         $("#apiStateIcon").text("🟢");
@@ -95,10 +91,6 @@ function updateUI(res) {
         $("#apiStateIcon").text("🔴");
     }
 
-    // =========================
-    // แสดงวันที่คิว
-    // =========================
-    
     if (res.queue_date_display) {
         $("#queueDateText").text(
             formatThaiDateWithWeekday(res.queue_date_display)
@@ -107,9 +99,26 @@ function updateUI(res) {
         $("#queueDateText").text("-");
     }
 
-    // =========================
-    // แสดงจำนวนคิว
-    // =========================
+    if (res.disabled_today === true || res.state === "DISABLED_TODAY") {
+
+        if (statusTimer) {
+            clearInterval(statusTimer);
+            statusTimer = null;
+        }
+
+        $("#stateText").text("งดบริการแจกคิว");
+        $("#messageText").text(res.message || "งดบริการแจกคิว");
+
+        $("#maxQueueText").text("0");
+        $("#usedQueueText").text("0");
+        $("#queueNo").text("---");
+        $("#detScore").text("det_score: -");
+
+        updateCameraPreview(res);
+
+        return;
+    }
+
     if (res.max_queue !== undefined) {
         $("#maxQueueText").text(res.max_queue);
     } else {
@@ -122,18 +131,12 @@ function updateUI(res) {
         $("#usedQueueText").text("-");
     }
 
-    // =========================
-    // แสดงคิวของผู้ใช้งาน
-    // =========================
     if (res.queue_no) {
         $("#queueNo").text(res.queue_no);
     } else {
         $("#queueNo").text("---");
     }
 
-    // =========================
-    // det score
-    // =========================
     if (res.det_score) {
         $("#detScore").text(
             "det_score: " +
@@ -147,6 +150,8 @@ function updateUI(res) {
 
     checkAndSpeakQueue(res);
 }
+
+
 
 function checkAndSpeakQueue(res) {
 
@@ -178,6 +183,15 @@ function updateCameraPreview(res) {
 
     const img = $("#cameraPreview");
 
+    if (res.disabled_today === true || res.state === "DISABLED_TODAY") {
+        img.hide();
+        img.attr("src", "");
+
+        $(".camera-title").text("พักการใช้งาน");
+
+        return;
+    }
+
     if (res.video_enabled === true) {
 
         img.show();
@@ -191,9 +205,7 @@ function updateCameraPreview(res) {
             );
         }
 
-        $(".camera-title").text(
-            "กล้องสแกนใบหน้า"
-        );
+        $(".camera-title").text("กล้องสแกนใบหน้า");
 
         return;
     }
@@ -213,9 +225,13 @@ function updateCameraPreview(res) {
     $(".camera-title").text(waitText);
 }
 
+
 function getStateText(state) {
 
     switch (state) {
+
+        case "DISABLED_TODAY":
+            return "งดบริการแจกคิว";
 
         case "STARTUP":
             return "กำลังเริ่มระบบ";
@@ -246,6 +262,8 @@ function getStateText(state) {
     }
 }
 
+let statusTimer = null;
+
 $(document).ready(function () {
 
     $("#enableVoiceBtn").on("click", function () {
@@ -261,5 +279,5 @@ $(document).ready(function () {
 
     loadStatus();
 
-    setInterval(loadStatus, 2000);
+    statusTimer = setInterval(loadStatus, 2000);
 });

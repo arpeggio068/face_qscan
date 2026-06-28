@@ -1,3 +1,5 @@
+# shared_state.py
+
 import threading
 from datetime import datetime
 from config import MAX_QUEUE
@@ -13,6 +15,7 @@ queue_date = datetime.now().strftime("%Y-%m-%d")
 queue_date_display = format_today_thai()
 api_state = "offline"
 checked_at = ""
+disabled_today = False
 
 current_state = {
     "state": "STARTUP",
@@ -24,12 +27,16 @@ current_state = {
     "last_event_id": 0,
     "wait_remaining": 0,
     "video_enabled": False,
+
     "max_queue": MAX_QUEUE,
     "used_queue": 0,
     "queue_date": queue_date,
     "queue_date_display": queue_date_display,
+
     "api_state": api_state,
     "checked_at": checked_at,
+    "disabled_today" : disabled_today,
+    
     "last_update": ""
 }
 

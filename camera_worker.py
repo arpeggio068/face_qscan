@@ -61,9 +61,35 @@ def clear_latest_frame():
     with shared_state.state_lock:
         shared_state.latest_frame = None
 
+def get_current_disabled_today():
+    with shared_state.state_lock:
+        return shared_state.disabled_today
+
 
 def camera_loop():
+
+    if get_current_disabled_today() is True:
+        update_state(
+            state="DISABLED_TODAY",
+            message="งดบริการแจกคิว",
+            queue_no="",
+            det_score=0.0,
+            similarity=None,
+            can_print=False,
+            last_event_id=0,
+            wait_remaining=0,
+            video_enabled=False,
+            max_queue=get_current_max_queue(),
+            used_queue=0,
+            queue_date_display=get_current_queue_date_display(),
+            disabled_today=True,
+        )
+
+        clear_latest_frame()
+        return
+
     initial_used_queue = get_queue_count()
+
     update_state(
         state="STARTUP",
         message="กำลังเริ่มระบบ กรุณาออกห่างจากกล้อง",
@@ -77,7 +103,9 @@ def camera_loop():
         max_queue=get_current_max_queue(),
         used_queue=initial_used_queue,
         queue_date_display=get_current_queue_date_display(),
+        disabled_today=False,
     )
+    
 
     face_app = load_face_app()
 
