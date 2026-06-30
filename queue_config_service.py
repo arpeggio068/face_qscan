@@ -16,6 +16,9 @@ def now_text():
 def today_text():
     return datetime.now().strftime("%Y-%m-%d")
 
+def is_weekend():
+    # mon = 0, tue = 1, wed = 2, thu = 3, fri = 4, sat = 5, sun = 6
+    return datetime.now().weekday() in (5, 6) 
 
 def format_thai_date(date_str):
     try:
@@ -44,6 +47,12 @@ def get_queue_config():
 
     if not WEB_API_URL:
         print("[Queue API] WEB_API_URL not configured")
+
+        if is_weekend():
+            result["disabled_today"] = True
+            result["max_queue"] = 0
+            print("[Queue API] weekend disabled = True")
+
         return result
 
     try:
@@ -62,7 +71,11 @@ def get_queue_config():
         obj = r.json()
 
         checked_at = obj.get("checked_at", now_text())
-        disabled_today = bool(obj.get("disabled_today", False))
+
+        api_disabled = bool(obj.get("disabled_today", False))
+        weekend_disabled = is_weekend()
+
+        disabled_today = api_disabled or weekend_disabled
 
         # ถ้าวันนี้ปิดบริการ ไม่สนใจ queue_date / max_queue
         if disabled_today:
@@ -115,8 +128,14 @@ def get_queue_config():
     except Exception as e:
         print(f"[Queue API] Exception = {repr(e)}")
 
-    print(f"[Queue API] use default MAX_QUEUE = {MAX_QUEUE}")
+    weekend_disabled = is_weekend()
+
+    if weekend_disabled:
+        result["disabled_today"] = True
+        result["max_queue"] = 0
+
+    print(f"[Queue API] use default MAX_QUEUE = {result['max_queue']}")
     print("[Queue API] api_state = offline")
-    print("[Queue API] disabled_today = False")
+    print(f"[Queue API] disabled_today = {result['disabled_today']}")
 
     return result
