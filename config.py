@@ -41,3 +41,10 @@ VIDEO_IDLE_SLEEP_SECONDS = 1.0
 
 AUTO_CAPTURE_STABLE_SECONDS = 2.0
 RESULT_DISPLAY_SECONDS = 3
+
+PRINTER_NAME = "POSPrinter POS80"   # ถ้าชื่อไม่ตรง ให้ดูจาก Control Panel > Printers
+
+PRINT_ENABLED = True
+
+TICKET_TITLE = "คิวทำฟัน"
+TICKET_WIDTH = 576        # thermal 80mm 203dpi

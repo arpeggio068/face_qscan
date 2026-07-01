@@ -13,6 +13,8 @@ from config import (
     SIMILARITY_THRESHOLD,   
 )
 
+from print_service import print_queue_ticket
+
 
 def now_th():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -63,7 +65,7 @@ def find_similar_face(conn, embedding):
     queue_date = get_today()
 
     cur.execute("""
-        SELECT id, queue_no, face_embedding, print_count
+        SELECT id, queue_no, face_embedding, print_count, qr_token
         FROM queues
         WHERE queue_date = ?
     """, (queue_date,))
@@ -74,7 +76,7 @@ def find_similar_face(conn, embedding):
     best_similarity = -1
 
     for row in rows:
-        queue_id, queue_no, blob, print_count = row
+        queue_id, queue_no, blob, print_count, qr_token = row
 
         try:
             old_embedding = blob_to_embedding(blob)
@@ -96,6 +98,7 @@ def find_similar_face(conn, embedding):
                 "id": queue_id,
                 "queue_no": queue_no,
                 "print_count": print_count,
+                "qr_token": qr_token,
                 "similarity": sim
             }
 
@@ -146,6 +149,7 @@ def save_or_update_queue(embedding, det_score):
     if similar:
         queue_id = similar["id"]
         queue_no = similar["queue_no"]
+        qr_token = similar["qr_token"]
         print_count = similar["print_count"]
         similarity = similar["similarity"]
 
@@ -188,10 +192,17 @@ def save_or_update_queue(embedding, det_score):
         conn.commit()
         conn.close()
 
+        if can_print:
+            print_queue_ticket(
+                queue_no=queue_no,
+                token=qr_token
+            )
+
         return {
             "status": "same_face",
             "queue_id": queue_id,
             "queue_no": queue_no,
+            "qr_token": qr_token,
             "similarity": similarity,
             "can_print": can_print,
             "message": "พบใบหน้าเดิม"
@@ -249,10 +260,18 @@ def save_or_update_queue(embedding, det_score):
         queue_id=queue_id,
         action="new_queue_print",
         similarity=None
-    )
+    )    
 
     conn.commit()
     conn.close()
+
+    try:
+        print_queue_ticket(
+            queue_no=queue_no,
+            token=qr_token
+        )
+    except Exception as e:
+        print("[PRINT ERROR]", e)
 
     return {
         "status": "new_face",

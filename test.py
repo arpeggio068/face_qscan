@@ -125,6 +125,8 @@ def test_camera_and_face(app):
     cv2.destroyAllWindows()
 
 
+
+
 def main():
     print("========== TEST START ==========")
 
@@ -139,3 +141,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+# python -c "import win32print; print(win32print.GetDefaultPrinter())" สำหรับตรวจสอบชื่อเครื่อง print
