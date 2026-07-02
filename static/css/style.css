@@ -19,6 +19,12 @@ body {
     justify-content: center;
 }
 
+.camera-head {
+    font-size: 26px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
 .camera-title {
     font-size: 28px;
     margin-bottom: 16px;
@@ -47,7 +53,7 @@ body {
 }
 
 .queue-label {
-    font-size: 36px;
+    font-size: 32px;
     margin-bottom: 10px;
 }
 
@@ -56,13 +62,13 @@ body {
     font-weight: bold;
     line-height: 1;
     color: #06d6a0;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .message-text {
     font-size: 34px;
     color: #ffffff;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .det-score {
@@ -127,4 +133,14 @@ body {
 #queueDateText {
     color: #ffd166;
     font-weight: 800;
+}
+
+.enable-time-text{
+    margin-top:6px;
+    margin-bottom:18px;
+
+    font-size:1.1rem;
+    font-weight:600;
+    color:#0d6efd;
+    text-align:center;
 }

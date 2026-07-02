@@ -5,14 +5,15 @@
     <title>Face Queue Scanner</title>
 
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/css/style.css?v=4">
+    <link rel="stylesheet" href="/static/css/style.css?v=6">
 </head>
 
 <body>
     <div class="container-fluid kiosk-page">
         <div class="row h-100">
-            <div class="col-md-5 camera-box">
-                <div class="camera-title">กล้องสแกนใบหน้า</div>
+            <div class="col-md-5 camera-box">                
+                <div class="camera-head">รับคิวทำฟัน</div>
+                <div class="camera-title">กล้องแสกนใบหน้า</div>
                 <img id="cameraPreview"  class="camera-preview">
             </div>
 
@@ -20,6 +21,10 @@
                 <div class="queue-date">
                     <span id="apiStateIcon">🔴</span>
                     <span id="queueDateText">-</span>
+                </div>
+
+                <div id="enableTimeText" class="enable-time-text">
+                    -
                 </div>
 
                 <button id="enableVoiceBtn" class="btn btn-primary voice-btn">
@@ -58,6 +63,6 @@
     <script src="/static/js/jquery-3.6.0.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/speech.js"></script>
-    <script src="/static/js/app.js?v=3"></script>
+    <script src="/static/js/app.js?v=4"></script>
 </body>
 </html>

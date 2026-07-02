@@ -7,6 +7,7 @@ import os
 load_dotenv()
 
 WEB_API_URL = os.getenv("WEB_API_URL", "")
+CALL_API_INTERVAL = 150 # 300 = 5 นาที
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -18,6 +19,9 @@ FACE_MODEL_NAME = "buffalo_s"
 
 DET_SCORE_THRESHOLD = 0.70
 SIMILARITY_THRESHOLD = 0.44
+
+ENABLE_START_TIME = "05:30"
+ENABLE_END_TIME = "17:00"
 
 MAX_QUEUE = 24
 MAX_PRINT_PER_FACE = 1
@@ -44,7 +48,7 @@ RESULT_DISPLAY_SECONDS = 3
 
 PRINTER_NAME = "POSPrinter POS80"   # ถ้าชื่อไม่ตรง ให้ดูจาก Control Panel > Printers
 
-PRINT_ENABLED = True
+PRINT_ENABLED = False
 
 TICKET_TITLE = "คิวทำฟัน"
 TICKET_WIDTH = 576        # thermal 80mm 203dpi

@@ -16,6 +16,11 @@ queue_date_display = format_today_thai()
 api_state = "offline"
 checked_at = ""
 disabled_today = False
+enable_time = True
+enable_start_time = ""
+enable_end_time = ""
+enable_time_display = ""
+disabled_reason = ""
 
 current_state = {
     "state": "STARTUP",
@@ -36,6 +41,12 @@ current_state = {
     "api_state": api_state,
     "checked_at": checked_at,
     "disabled_today" : disabled_today,
+
+    "enable_time": enable_time,
+    "enable_start_time": enable_start_time,
+    "enable_end_time": enable_end_time,
+    "enable_time_display": enable_time_display,
+    "disabled_reason": disabled_reason,
     
     "last_update": ""
 }

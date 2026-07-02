@@ -11,7 +11,7 @@ import uvicorn
 from db import init_db
 from api.routes import router
 from camera_worker import camera_loop
-from config import BASE_DIR
+from config import BASE_DIR, CALL_API_INTERVAL
 
 import shared_state
 from queue_config_service import get_queue_config
@@ -27,6 +27,11 @@ def apply_queue_config(queue_config):
         shared_state.checked_at = queue_config["checked_at"]
         shared_state.api_state = queue_config["api_state"]
         shared_state.disabled_today = disabled_today
+        shared_state.enable_time = queue_config["enable_time"]
+        shared_state.enable_start_time = queue_config["enable_start_time"]
+        shared_state.enable_end_time = queue_config["enable_end_time"]
+        shared_state.enable_time_display = queue_config["enable_time_display"]
+        shared_state.disabled_reason = queue_config["disabled_reason"]
 
         shared_state.current_state["max_queue"] = queue_config["max_queue"]
         shared_state.current_state["queue_date"] = queue_config["queue_date"]
@@ -34,11 +39,16 @@ def apply_queue_config(queue_config):
         shared_state.current_state["checked_at"] = queue_config["checked_at"]
         shared_state.current_state["api_state"] = queue_config["api_state"]
         shared_state.current_state["disabled_today"] = disabled_today
+        shared_state.current_state["enable_time"] = queue_config["enable_time"]
+        shared_state.current_state["enable_start_time"] = queue_config["enable_start_time"]
+        shared_state.current_state["enable_end_time"] = queue_config["enable_end_time"]
+        shared_state.current_state["enable_time_display"] = queue_config["enable_time_display"]
+        shared_state.current_state["disabled_reason"] = queue_config["disabled_reason"]
 
 
 def queue_config_loop():
     while True:
-        time.sleep(300)
+        time.sleep(CALL_API_INTERVAL) # 300 = 5 นาที
 
         queue_config = get_queue_config()
         apply_queue_config(queue_config)

@@ -99,12 +99,18 @@ function updateUI(res) {
         $("#queueDateText").text("-");
     }
 
+    if (res.enable_time_display) {
+        $("#enableTimeText").text(res.enable_time_display);
+    } else {
+        $("#enableTimeText").text("");
+    }
+
     if (res.disabled_today === true || res.state === "DISABLED_TODAY") {
 
-        if (statusTimer) {
-            clearInterval(statusTimer);
-            statusTimer = null;
-        }
+        // if (statusTimer) {
+        //     clearInterval(statusTimer);
+        //     statusTimer = null;
+        // }
 
         $("#stateText").text("งดบริการแจกคิว");
         $("#messageText").text(res.message || "งดบริการแจกคิว");
