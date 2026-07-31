@@ -19,6 +19,8 @@ from config import (
     AUTO_CAPTURE_STABLE_SECONDS,
     RESULT_DISPLAY_SECONDS,
     INFER_INTERVAL_SECONDS,
+    NO_FACE_TIMEOUT_SECONDS,
+    NO_FACE_COOLDOWN_SECONDS,
 )
 import shared_state
 
@@ -129,8 +131,10 @@ def camera_loop():
 
     next_scan_time = 0
     face_ready_since = None
+    no_face_since = None
     last_infer_time = 0
     last_faces = []
+    wait_reason = "next_person"
 
     while True:
 
@@ -141,6 +145,7 @@ def camera_loop():
 
             set_disabled_state()
             face_ready_since = None
+            no_face_since = None
             last_faces = []
 
             time.sleep(WAIT_SLEEP_SECONDS)
@@ -194,6 +199,7 @@ def camera_loop():
 
             next_scan_time = 0
             face_ready_since = None
+            no_face_since = None
             last_infer_time = 0
             last_faces = []
 
@@ -245,9 +251,18 @@ def camera_loop():
             remaining = max(0, int(next_scan_time - now))
             runtime = get_runtime_state()
 
+            if wait_reason == "no_face":
+                wait_message = (
+                    f"ไม่พบใบหน้า พักการสแกน {remaining} วินาที"
+                )
+            else:
+                wait_message = (
+                    f"กรุณารอ {remaining} วินาที ก่อนสแกนคนถัดไป"
+                )
+
             update_state(
                 state="WAITING",
-                message=f"กรุณารอ {remaining} วินาที ก่อนสแกนคนถัดไป",
+                message=wait_message,
                 queue_no="",
                 det_score=0.0,
                 similarity=None,
@@ -259,6 +274,7 @@ def camera_loop():
             )
 
             face_ready_since = None
+            no_face_since = None
             clear_latest_frame()
             time.sleep(WAIT_SLEEP_SECONDS)
             continue
@@ -295,6 +311,7 @@ def camera_loop():
             faces = last_faces
 
         if len(faces) == 1:
+            no_face_since = None
             face = faces[0]
             det_score = float(face.det_score)
 
@@ -377,6 +394,7 @@ def camera_loop():
                     time.sleep(RESULT_DISPLAY_SECONDS)
 
                     clear_latest_frame()
+                    wait_reason = "next_person"
                     next_scan_time = time.time() + CAPTURE_COOLDOWN_SECONDS
                     time.sleep(WAIT_SLEEP_SECONDS)
 
@@ -399,6 +417,7 @@ def camera_loop():
 
         elif len(faces) > 1:
             face_ready_since = None
+            no_face_since = None
             set_latest_frame(frame)
             runtime = get_runtime_state()
 
@@ -418,6 +437,39 @@ def camera_loop():
         else:
             face_ready_since = None
             set_latest_frame(frame)
+
+            if no_face_since is None:
+                no_face_since = now
+
+            no_face_elapsed = now - no_face_since
+
+            if no_face_elapsed >= NO_FACE_TIMEOUT_SECONDS:
+                runtime = get_runtime_state()
+
+                wait_reason = "no_face"
+                next_scan_time = time.time() + NO_FACE_COOLDOWN_SECONDS
+                no_face_since = None
+
+                update_state(
+                    state="WAITING",
+                    message=(
+                        f"ไม่พบใบหน้า พักการสแกน "
+                        f"{NO_FACE_COOLDOWN_SECONDS} วินาที"
+                    ),
+                    queue_no="",
+                    det_score=0.0,
+                    similarity=None,
+                    can_print=False,
+                    wait_remaining=NO_FACE_COOLDOWN_SECONDS,
+                    video_enabled=False,
+                    used_queue=get_current_used_queue(),
+                    **runtime,
+                )
+
+                clear_latest_frame()
+                time.sleep(WAIT_SLEEP_SECONDS)
+                continue
+
             runtime = get_runtime_state()
 
             update_state(

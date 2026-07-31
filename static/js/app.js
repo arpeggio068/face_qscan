@@ -1,6 +1,38 @@
 // app.js
 
 let lastEventId = 0;
+let statusTimer = null;
+let statusPollingStopped = false;
+
+function stopStatusPolling() {
+    statusPollingStopped = true;
+
+    if (statusTimer !== null) {
+        clearTimeout(statusTimer);
+        statusTimer = null;
+    }
+
+    console.log("หยุด polling /api/status");
+}
+
+function shouldStopStatusPolling(res) {
+    return (
+        res.disabled_today === true ||
+        res.state === "DISABLED_TODAY" ||
+        res.enable_time === false ||
+        res.disabled_reason === "api_disabled" ||
+        res.disabled_reason === "out_of_service_time" ||
+        res.disabled_reason === "weekend"
+    );
+}
+
+function scheduleNextStatus() {
+    if (statusPollingStopped) {
+        return;
+    }
+
+    statusTimer = setTimeout(loadStatus, 2000);
+}
 
 function formatThaiDateWithWeekday(thDate) {
 
@@ -61,6 +93,13 @@ function loadStatus() {
             console.log("api_state =", res.api_state);
 
             updateUI(res);
+
+            if (shouldStopStatusPolling(res)) {
+                stopStatusPolling();
+                return;
+            }
+
+            scheduleNextStatus();
         },
         error: function (xhr, status, error) {
 
@@ -70,6 +109,8 @@ function loadStatus() {
 
             $("#stateText").text("เชื่อมต่อระบบไม่ได้");
             $("#messageText").text("กรุณาตรวจสอบ server");
+
+            scheduleNextStatus();
         }
     });
 }
@@ -106,11 +147,6 @@ function updateUI(res) {
     }
 
     if (res.disabled_today === true || res.state === "DISABLED_TODAY") {
-
-        // if (statusTimer) {
-        //     clearInterval(statusTimer);
-        //     statusTimer = null;
-        // }
 
         $("#stateText").text("งดบริการแจกคิว");
         $("#messageText").text(res.message || "งดบริการแจกคิว");
@@ -268,8 +304,6 @@ function getStateText(state) {
     }
 }
 
-let statusTimer = null;
-
 $(document).ready(function () {
 
     $("#enableVoiceBtn").on("click", function () {
@@ -284,6 +318,4 @@ $(document).ready(function () {
     });
 
     loadStatus();
-
-    statusTimer = setInterval(loadStatus, 2000);
 });
