@@ -17,6 +17,7 @@ import shared_state
 from queue_config_service import get_queue_config
 
 
+
 def apply_queue_config(queue_config):
     disabled_today = queue_config.get("disabled_today", False)
 
@@ -48,15 +49,14 @@ def apply_queue_config(queue_config):
 
 def queue_config_loop():
     while True:
-        time.sleep(CALL_API_INTERVAL) # 300 = 5 นาที
-
+        time.sleep(CALL_API_INTERVAL)
         queue_config = get_queue_config()
-        apply_queue_config(queue_config)
-
-        print(f"[Queue API Update] max_queue = {shared_state.max_queue}")
-        print(f"[Queue API Update] checked_at = {shared_state.checked_at}")
-        print(f"[Queue API Update] api_state = {shared_state.api_state}")
-        print(f"[Queue API Update] disabled_today = {shared_state.disabled_today}")
+        if queue_config.get("api_state") == "online" and queue_config.get("reason") == "queue_data_found":
+            apply_queue_config(queue_config)
+            
+            print(f"[Queue API Update] config updated, max_queue = {shared_state.max_queue}")
+        else:
+            print(f"[Queue API Update] config not updated, keep max_queue = {shared_state.max_queue}")
 
 
 app = FastAPI()

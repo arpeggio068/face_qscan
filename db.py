@@ -49,5 +49,17 @@ def init_db():
         )
     """)
 
+
+    cur.execute("""
+            CREATE TABLE IF NOT EXISTS queue_config_cache (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                api_id TEXT NOT NULL,
+                queue_date TEXT NOT NULL,
+                max_queue INTEGER NOT NULL,
+                checked_at TEXT NOT NULL,
+                saved_at TEXT NOT NULL
+            )
+        """)
+
     conn.commit()
     conn.close()

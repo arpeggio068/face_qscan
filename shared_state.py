@@ -15,6 +15,7 @@ queue_date = datetime.now().strftime("%Y-%m-%d")
 queue_date_display = format_today_thai()
 api_state = "offline"
 checked_at = ""
+api_id = ""
 disabled_today = False
 enable_time = True
 enable_start_time = ""
@@ -40,6 +41,7 @@ current_state = {
 
     "api_state": api_state,
     "checked_at": checked_at,
+    "api_id": api_id,
     "disabled_today" : disabled_today,
 
     "enable_time": enable_time,

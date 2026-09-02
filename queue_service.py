@@ -302,17 +302,66 @@ def get_queue_count():
     return count
 
 
-
-def reset_live_queues():
+def save_queue_config_cache(queue_config):
     conn = get_conn()
     cur = conn.cursor()
-
-    cur.execute("DELETE FROM queues")
-
     cur.execute("""
-        DELETE FROM sqlite_sequence
-        WHERE name = 'queues'
-    """)
-
+        INSERT INTO queue_config_cache(id, api_id, queue_date, max_queue, checked_at, saved_at)
+        VALUES (1, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            api_id=excluded.api_id,
+            queue_date=excluded.queue_date,
+            max_queue=excluded.max_queue,
+            checked_at=excluded.checked_at,
+            saved_at=excluded.saved_at
+    """, (
+        queue_config["api_id"],
+        queue_config["queue_date"],
+        queue_config["max_queue"],
+        queue_config["checked_at"],
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
     conn.commit()
     conn.close()
+
+
+
+def load_queue_config_cache(current_date):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT api_id, queue_date, max_queue, checked_at
+        FROM queue_config_cache
+        WHERE id = 1 AND queue_date = ?
+    """, (current_date,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {
+        "api_id": row[0],
+        "queue_date": row[1],
+        "max_queue": int(row[2]),
+        "checked_at": row[3]
+    }
+
+
+
+def reset_live_queues(current_time_text=None):
+    try:
+        current_date = datetime.strptime(current_time_text, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+        time_source = "api_checked_at"
+    except (TypeError, ValueError):
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        time_source = "local_machine"
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM queues
+        WHERE queue_date < ?
+    """, (current_date,))
+    deleted_count = cur.rowcount
+    conn.commit()
+    conn.close()
+    print(f"[Queue Reset] deleted={deleted_count}, current_date={current_date}, source={time_source}")
+    return deleted_count
