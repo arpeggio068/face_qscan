@@ -15,7 +15,7 @@ from config import BASE_DIR, CALL_API_INTERVAL
 
 import shared_state
 from queue_config_service import get_queue_config
-
+from queue_service import reset_live_queues_on_test
 
 
 def apply_queue_config(queue_config):
@@ -23,6 +23,7 @@ def apply_queue_config(queue_config):
 
     with shared_state.state_lock:
         shared_state.max_queue = queue_config["max_queue"]
+        shared_state.api_id = queue_config.get("api_id", shared_state.api_id)
         shared_state.queue_date = queue_config["queue_date"]
         shared_state.queue_date_display = queue_config["queue_date_display"]
         shared_state.checked_at = queue_config["checked_at"]
@@ -35,6 +36,7 @@ def apply_queue_config(queue_config):
         shared_state.disabled_reason = queue_config["disabled_reason"]
 
         shared_state.current_state["max_queue"] = queue_config["max_queue"]
+        shared_state.current_state["api_id"] = shared_state.api_id
         shared_state.current_state["queue_date"] = queue_config["queue_date"]
         shared_state.current_state["queue_date_display"] = queue_config["queue_date_display"]
         shared_state.current_state["checked_at"] = queue_config["checked_at"]
@@ -49,14 +51,16 @@ def apply_queue_config(queue_config):
 
 def queue_config_loop():
     while True:
-        time.sleep(CALL_API_INTERVAL)
-        queue_config = get_queue_config()
-        if queue_config.get("api_state") == "online" and queue_config.get("reason") == "queue_data_found":
-            apply_queue_config(queue_config)
-            
-            print(f"[Queue API Update] config updated, max_queue = {shared_state.max_queue}")
-        else:
-            print(f"[Queue API Update] config not updated, keep max_queue = {shared_state.max_queue}")
+        time.sleep(CALL_API_INTERVAL) # 300 = 5 นาที
+
+        queue_config = get_queue_config()        
+
+        apply_queue_config(queue_config)
+
+        print(f"[Queue API Update] max_queue = {shared_state.max_queue}")
+        print(f"[Queue API Update] checked_at = {shared_state.checked_at}")
+        print(f"[Queue API Update] api_state = {shared_state.api_state}")
+        print(f"[Queue API Update] disabled_today = {shared_state.disabled_today}")
 
 
 app = FastAPI()
@@ -77,6 +81,13 @@ def startup_event():
     init_db()
 
     queue_config = get_queue_config()
+
+    '''
+      reset_live_queues_on_test(
+              queue_config.get("checked_at")
+          )
+    '''    
+
     apply_queue_config(queue_config)
 
     print(f"[STARTUP] max_queue = {shared_state.max_queue}")

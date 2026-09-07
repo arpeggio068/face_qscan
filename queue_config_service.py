@@ -36,7 +36,10 @@ def set_global_api_id(api_id):
 def update_api_id(reason, data):
     if reason != "queue_data_found" or not isinstance(data, list) or not data or not isinstance(data[0], dict):
         return shared_state.api_id
-    api_id = data[0].get("api_id", "")
+    api_id = str(data[0].get("api_id", "")).strip()
+    if not api_id:
+        print("[Queue API] response has no api_id, keep previous api_id")
+        return shared_state.api_id
     set_global_api_id(api_id)
     print(f"[Queue API] api_id = {api_id}")
     return api_id

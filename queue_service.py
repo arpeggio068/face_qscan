@@ -14,6 +14,7 @@ from config import (
 )
 
 from print_service import print_queue_ticket
+from queue_update_service import post_latest_queue_if_due
 
 
 def now_th():
@@ -265,6 +266,8 @@ def save_or_update_queue(embedding, det_score):
     conn.commit()
     conn.close()
 
+    post_latest_queue_if_due(queue_no)
+
     try:
         print_queue_ticket(
             queue_no=queue_no,
@@ -359,6 +362,27 @@ def reset_live_queues(current_time_text=None):
     cur.execute("""
         DELETE FROM queues
         WHERE queue_date < ?
+    """, (current_date,))
+    deleted_count = cur.rowcount
+    conn.commit()
+    conn.close()
+    print(f"[Queue Reset] deleted={deleted_count}, current_date={current_date}, source={time_source}")
+    return deleted_count
+
+
+
+def reset_live_queues_on_test(current_time_text=None):
+    try:
+        current_date = datetime.strptime(current_time_text, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+        time_source = "api_checked_at"
+    except (TypeError, ValueError):
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        time_source = "local_machine"
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM queues
+        WHERE queue_date <= ?
     """, (current_date,))
     deleted_count = cur.rowcount
     conn.commit()
