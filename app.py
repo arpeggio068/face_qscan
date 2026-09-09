@@ -82,11 +82,11 @@ def startup_event():
 
     queue_config = get_queue_config()
 
-    '''
-      reset_live_queues_on_test(
+    
+    reset_live_queues_on_test(
               queue_config.get("checked_at")
-          )
-    '''    
+    )
+      
 
     apply_queue_config(queue_config)
 

@@ -5,6 +5,7 @@ import shared_state
 from config import MAX_QUEUE, WEB_API_URL, ENABLE_START_TIME, ENABLE_END_TIME
 
 _queues_reset_done = False
+_start_notification_sent = False
 
 def parse_time(time_text):
     return datetime.strptime(time_text, "%H:%M").time()
@@ -88,9 +89,11 @@ def base_result(checked_at=None):
     default_date = checked_at[:10]
     return {
         "max_queue": MAX_QUEUE,
+        "max_queue_from": "default",
         "queue_date": default_date,
         "queue_date_display": format_thai_date(default_date),
         "checked_at": checked_at,
+        "checked_at_from": "api" if use_api_time else "local_machine",
         "api_id": shared_state.api_id,
         "api_state": "offline",
         "source": "default",
@@ -132,6 +135,7 @@ def get_cached_or_default_result(checked_at=None):
         "queue_date": cache["queue_date"],
         "queue_date_display": format_thai_date(cache["queue_date"]),
         "max_queue": cache["max_queue"],
+        "max_queue_from": "api",
         "source": "cache",
         "reason": "queue_cache_found"
     })
@@ -139,11 +143,29 @@ def get_cached_or_default_result(checked_at=None):
     return result
 
 def finalize_queue_config(result):
-    global _queues_reset_done
+    global _queues_reset_done, _start_notification_sent
+    with shared_state.state_lock:
+        shared_state.max_queue = result["max_queue"]
+        shared_state.max_queue_from = result["max_queue_from"]
+        shared_state.checked_at = result["checked_at"]
+        shared_state.checked_at_from = result["checked_at_from"]
+        shared_state.current_state["checked_at"] = result["checked_at"]
+        shared_state.current_state["checked_at_from"] = result["checked_at_from"]
+        shared_state.current_state["max_queue"] = result["max_queue"]
+        shared_state.current_state["max_queue_from"] = result["max_queue_from"]
     if not _queues_reset_done:
         from queue_service import reset_live_queues
         reset_live_queues(result["checked_at"])
         _queues_reset_done = True
+    if not _start_notification_sent:
+        from queue_update_service import send_face_scan_start
+        send_face_scan_start(
+            result["checked_at"],
+            result["checked_at_from"],
+            result["max_queue"],
+            result["max_queue_from"],
+        )
+        _start_notification_sent = True
     return result
 
 def get_queue_config():
@@ -166,7 +188,7 @@ def get_queue_config():
         if not valid_data:
             if api_disabled:
                 result = get_cached_or_default_result(checked_at)
-                result.update({"checked_at": checked_at, "api_state": "online", "source": "api", "reason": reason or "api_disabled"})
+                result.update({"checked_at": checked_at, "checked_at_from": "api", "api_state": "online", "source": "api", "reason": reason or "api_disabled"})
                 return finalize_queue_config(apply_runtime_disable(result, api_disabled=True))
             raise ValueError(f"invalid queue config: status={obj.get('status')}, reason={reason}, data={data}")
         rec = data[0]
@@ -176,6 +198,7 @@ def get_queue_config():
         result = base_result(checked_at)
         result.update({
             "max_queue": max_queue,
+            "max_queue_from": "api",
             "queue_date": queue_date,
             "queue_date_display": format_thai_date(queue_date),
             "checked_at": checked_at,

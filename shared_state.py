@@ -11,11 +11,13 @@ def format_today_thai():
     return dt.strftime("%d/%m/") + str(dt.year + 543)
 
 max_queue = MAX_QUEUE
+max_queue_from = "default"
 api_id = ""
 queue_date = datetime.now().strftime("%Y-%m-%d")
 queue_date_display = format_today_thai()
 api_state = "offline"
 checked_at = ""
+checked_at_from = "local_machine"
 disabled_today = False
 enable_time = True
 enable_start_time = ""
@@ -35,6 +37,7 @@ current_state = {
     "video_enabled": False,
 
     "max_queue": MAX_QUEUE,
+    "max_queue_from": max_queue_from,
     "api_id": api_id,
     "used_queue": 0,
     "queue_date": queue_date,
@@ -42,6 +45,7 @@ current_state = {
 
     "api_state": api_state,
     "checked_at": checked_at,
+    "checked_at_from": checked_at_from,
     "disabled_today" : disabled_today,
 
     "enable_time": enable_time,
